@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.title }} | Solicitações{% endblock %}
+{% block heading %}Solicitação #{{ item.id }}{% endblock %}
+{% block content %}
+<div class="request-detail-top">
+  <a class="back-link" href="{{ url_for('main.work_requests') }}"><i class="bi bi-arrow-left"></i> Voltar para solicitações</a>
+  {% if current_user.role == 'admin' or item.created_by_id == current_user.id %}<form method="post" action="{{ url_for('main.work_request_delete',request_id=item.id) }}" onsubmit="return confirm('Excluir esta solicitação e sua conversa?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Excluir solicitação</button></form>{% endif %}<span class="request-status status-{{ item.status|lower|replace(' ', '-') }}">{{ item.status }}</span>
+</div>
+<div class="request-detail-layout">
+  <div class="request-detail-main">
+    <section class="panel request-description-panel">
+      <div class="request-detail-titleline">
+        <div><span class="eyebrow">{{ item.category }} · SOLICITAÇÃO #{{ item.id }}</span><h2>{{ item.title }}</h2></div>
+        <span class="priority priority-{{ item.priority|lower }}">{{ item.priority }}</span>
+      </div>
+      <div class="request-description">{{ item.description }}</div>
+      <div class="request-meta request-detail-meta">
+        <span><i class="bi bi-person"></i> Aberta por {{ item.creator.name }}</span>
+        <span><i class="bi bi-calendar-plus"></i> {{ item.created_at.strftime('%d/%m/%Y às %H:%M') }}</span>
+        {% if item.due_date %}<span><i class="bi bi-calendar-event"></i> Prazo: {{ item.due_date.strftime('%d/%m/%Y') }}</span>{% endif %}
+      </div>
+    </section>
+
+    <section class="panel conversation-panel" id="conversa">
+      <div class="panel-head">
+        <div><span class="eyebrow">COMUNICAÇÃO DA EQUIPE</span><h3>Conversa da solicitação</h3></div>
+        <span class="conversation-count"><i class="bi bi-chat-dots"></i> {{ item.messages|length }} mensagens</span>
+      </div>
+      <div class="message-thread">
+        {% for message in item.messages %}
+        <article class="message-item {% if message.user_id == current_user.id %}own-message{% endif %}">
+          <div class="message-avatar">{{ message.author.name[:1]|upper }}</div>
+          <div class="message-content">
+            <div class="message-heading"><strong>{{ message.author.name }}</strong><time>{{ message.created_at.strftime('%d/%m/%Y às %H:%M') }}</time>{% if current_user.role == 'admin' or message.user_id == current_user.id %}<a class="btn btn-link btn-sm" href="{{ url_for('main.work_request_message_edit',message_id=message.id) }}">Editar</a><form method="post" action="{{ url_for('main.work_request_message_delete',message_id=message.id) }}" onsubmit="return confirm('Excluir esta mensagem?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-link btn-sm text-danger">Excluir</button></form>{% endif %}</div>
+            <div class="message-bubble">{{ message.body }}</div>
+          </div>
+        </article>
+        {% else %}
+        <div class="conversation-empty"><i class="bi bi-chat-square-text"></i><span>Esta conversa ainda não tem mensagens. Envie uma atualização ou dúvida para iniciar.</span></div>
+        {% endfor %}
+      </div>
+      <form method="post" action="{{ url_for('main.work_request_message', request_id=item.id) }}" class="message-compose">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="message-body">Escreva para a equipe</label>
+        <textarea id="message-body" class="form-control" name="body" rows="3" maxlength="10000" placeholder="Compartilhe informações, dúvidas ou atualizações sobre esta solicitação..." required></textarea>
+        <div class="message-compose-footer"><small>Todos os servidores com acesso ao sistema podem acompanhar esta conversa.</small><button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Enviar mensagem</button></div>
+      </form>
+    </section>
+  </div>
+
+  <aside class="panel request-settings-panel">
+    <span class="eyebrow">ACOMPANHAMENTO</span>
+    <h3>Atualizar solicitação</h3>
+    <form method="post" action="{{ url_for('main.work_request_update', request_id=item.id) }}" class="request-settings-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label for="edit-title">Título</label><input id="edit-title" class="form-control" name="title" maxlength="180" value="{{ item.title }}" required></div>
+      <div><label for="edit-category">Categoria</label><select id="edit-category" class="form-select" name="category">{% for category in ['Tarefa','Manutenção','Aquisição','Organização','Tecnologia','Outro'] %}<option value="{{ category }}" {% if item.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select></div>
+      <div class="span-2"><label for="edit-description">Descrição</label><textarea id="edit-description" class="form-control" name="description" rows="4" maxlength="10000" required>{{ item.description }}</textarea></div>
+      <div><label for="edit-status">Status</label><select id="edit-status" class="form-select" name="status">{% for status in statuses %}<option value="{{ status }}" {% if item.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></div>
+      <div><label for="edit-priority">Prioridade</label><select id="edit-priority" class="form-select" name="priority">{% for priority in priorities %}<option value="{{ priority }}" {% if item.priority == priority %}selected{% endif %}>{{ priority }}</option>{% endfor %}</select></div>
+      <div><label for="edit-assignee">Responsável</label><select id="edit-assignee" class="form-select" name="assigned_to_id"><option value="">Sem responsável</option>{% for user in users %}<option value="{{ user.id }}" {% if item.assigned_to_id == user.id %}selected{% endif %}>{{ user.name }}</option>{% endfor %}</select></div>
+      <div><label for="edit-due">Prazo</label><input id="edit-due" class="form-control" type="date" name="due_date" value="{{ item.due_date.isoformat() if item.due_date else '' }}"></div>
+      <button class="btn btn-primary w-100" type="submit"><i class="bi bi-check2-circle"></i> Salvar alterações</button>
+    </form>
+    <div class="request-side-info">
+      <div><span>Criada por</span><strong>{{ item.creator.name }}</strong></div>
+      <div><span>Última atualização</span><strong>{{ item.updated_at.strftime('%d/%m/%Y às %H:%M') }}</strong></div>
+      <div><span>Mensagens</span><strong>{{ item.messages|length }}</strong></div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

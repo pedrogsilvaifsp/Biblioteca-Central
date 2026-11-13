@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Solicitações | Biblioteca Central{% endblock %}
+{% block heading %}Solicitações e comunicação{% endblock %}
+{% block content %}
+<div class="page-actions">
+  <div>
+    <h2>Central de solicitações</h2>
+    <p>Registre tarefas, necessidades da biblioteca e converse com a equipe em cada solicitação.</p>
+  </div>
+  <span class="request-total"><i class="bi bi-people"></i> {{ rows|length }} solicitação(ões) nesta visualização</span>
+</div>
+
+<div class="request-counts">
+  {% for status, count in counts.items() %}
+  <a class="request-count {% if status_filter == status %}selected{% endif %}" href="{{ url_for('main.work_requests', status=status) }}">
+    <span>{{ status }}</span><strong>{{ count }}</strong>
+  </a>
+  {% endfor %}
+</div>
+
+<section class="panel request-create">
+  <div class="panel-head">
+    <div><span class="eyebrow">NOVA DEMANDA</span><h3>O que precisa ser feito?</h3></div>
+    <i class="bi bi-plus-circle request-create-icon"></i>
+  </div>
+  <form method="post" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="span-2">
+      <label for="request-title">Título da solicitação</label>
+      <input id="request-title" class="form-control" name="title" maxlength="180" placeholder="Ex.: Organizar os livros devolvidos" required>
+    </div>
+    <div>
+      <label for="request-category">Tipo</label>
+      <select id="request-category" class="form-select" name="category">
+        {% for category in categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="request-priority">Prioridade</label>
+      <select id="request-priority" class="form-select" name="priority">
+        {% for priority in priorities %}<option value="{{ priority }}" {% if priority == 'Normal' %}selected{% endif %}>{{ priority }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="request-due">Prazo (opcional)</label>
+      <input id="request-due" class="form-control" type="date" name="due_date">
+    </div>
+    <div>
+      <label for="request-assignee">Responsável (opcional)</label>
+      <select id="request-assignee" class="form-select" name="assigned_to_id">
+        <option value="">Definir depois</option>
+        {% for user in users %}<option value="{{ user.id }}">{{ user.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="span-2">
+      <label for="request-description">Descrição</label>
+      <textarea id="request-description" class="form-control request-textarea" name="description" rows="3" maxlength="10000" placeholder="Explique a necessidade, o que deve ser feito e outras informações importantes..." required></textarea>
+    </div>
+    <div class="span-2 form-footer">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Enviar solicitação</button>
+    </div>
+  </form>
+</section>
+
+<div class="request-list-head">
+  <div><h3>Demandas da equipe</h3><p>Abra uma solicitação para acompanhar o andamento e participar da conversa.</p></div>
+  <form method="get" class="request-search">
+    <input class="form-control" name="q" value="{{ term }}" placeholder="Buscar solicitação..." aria-label="Buscar solicitação">
+    {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+    <button class="btn btn-light" type="submit"><i class="bi bi-search"></i></button>
+    {% if term or status_filter %}<a class="btn btn-light" href="{{ url_for('main.work_requests') }}" title="Limpar filtros"><i class="bi bi-x-lg"></i></a>{% endif %}
+  </form>
+</div>
+<div class="request-list">
+  {% for item in rows %}
+  <a class="request-card" href="{{ url_for('main.work_request_detail', request_id=item.id) }}">
+    <div class="request-card-main">
+      <div class="request-card-title-row">
+        <h4>{{ item.title }}</h4>
+        <span class="request-status status-{{ item.status|lower|replace(' ', '-') }}">{{ item.status }}</span>
+      </div>
+      <p>{{ item.description|truncate(190) }}</p>
+      <div class="request-meta">
+        <span><i class="bi bi-tag"></i> {{ item.category }}</span>
+        <span><i class="bi bi-person"></i> {{ item.creator.name }}</span>
+        <span><i class="bi bi-chat-dots"></i> {{ item.messages|length }} mensagem(ns)</span>
+        {% if item.due_date %}<span><i class="bi bi-calendar"></i> Prazo: {{ item.due_date.strftime('%d/%m/%Y') }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="request-card-side">
+      <span class="priority priority-{{ item.priority|lower }}">{{ item.priority }}</span>
+      <small>{% if item.assignee %}Responsável: {{ item.assignee.name }}{% else %}Sem responsável{% endif %}</small>
+      <small>Atualizada em {{ item.updated_at.strftime('%d/%m/%Y %H:%M') }}</small>
+      <i class="bi bi-arrow-up-right"></i>
+    </div>
+  </a>
+  {% else %}
+  <div class="panel empty-request">
+    <i class="bi bi-inbox"></i>
+    <strong>Nenhuma solicitação encontrada</strong>
+    <span>Crie a primeira demanda ou altere os filtros da busca.</span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

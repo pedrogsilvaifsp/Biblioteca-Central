@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Gerência | Biblioteca Central{% endblock %}
+{% block heading %}Central de gerência{% endblock %}
+{% block content %}
+<div class="management-intro">
+  <div><span class="eyebrow">ADMINISTRAÇÃO GERAL</span><h2>Visão integrada da biblioteca</h2><p>Acompanhe o acervo, a equipe, as demandas e os alertas em um único painel.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('main.import_acervo') }}"><i class="bi bi-file-earmark-arrow-up"></i> Importar acervo</a>
+</div>
+<div class="management-stats">
+  {% for label,key,icon in [('Títulos','titles','bi-book'),('Exemplares','copies','bi-collection'),('Disponíveis','available','bi-check-circle'),('Emprestados','loaned','bi-arrow-left-right'),('Em manutenção','maintenance','bi-tools'),('Em atraso','overdue','bi-clock-history'),('Solicitações abertas','requests_open','bi-chat-square-text'),('Notificações abertas','notifications_open','bi-bell'),('Servidores ativos','users_active','bi-people')] %}
+  <div class="management-stat"><span class="management-stat-icon"><i class="bi {{ icon }}"></i></span><small>{{ label }}</small><strong>{{ stats[key] }}</strong></div>
+  {% endfor %}
+</div>
+<div class="management-grid">
+  <section class="panel management-panel"><div class="panel-head"><div><span class="eyebrow">EQUIPE</span><h3>Solicitações recentes</h3></div><a class="text-link" href="{{ url_for('main.work_requests') }}">Abrir central →</a></div>
+    {% for item in requests %}<a class="management-list-row" href="{{ url_for('main.work_request_detail',request_id=item.id) }}"><span class="management-list-icon"><i class="bi bi-chat-left-text"></i></span><span class="management-list-copy"><b>{{ item.title }}</b><small>{{ item.creator.name }} · {{ item.updated_at.strftime('%d/%m/%Y %H:%M') }}</small></span><span class="request-status">{{ item.status }}</span></a>{% else %}<p class="muted">Nenhuma solicitação cadastrada.</p>{% endfor %}
+  </section>
+  <section class="panel management-panel"><div class="panel-head"><div><span class="eyebrow">ATENÇÃO</span><h3>Notificações pendentes</h3></div><a class="text-link" href="{{ url_for('main.notifications') }}">Ver todas →</a></div>
+    {% for alert in alerts %}<div class="management-list-row"><span class="management-list-icon alert-icon"><i class="bi bi-bell"></i></span><span class="management-list-copy"><b>{{ alert.message }}</b><small>{{ alert.created_at.strftime('%d/%m/%Y %H:%M') }}</small></span></div>{% else %}<p class="muted">Nenhuma notificação pendente.</p>{% endfor %}
+  </section>
+</div>
+<section class="panel management-panel mt-4"><div class="panel-head"><div><span class="eyebrow">CONTROLE E RASTREABILIDADE</span><h3>Atividades recentes</h3></div><a class="text-link" href="{{ url_for('main.audit_log') }}">Histórico completo →</a></div>
+  {% for log in recent %}<div class="activity-row"><span class="activity-dot"></span><div><b>{{ log.action }}</b><span>{{ log.entity }} #{{ log.entity_id or '—' }} · {{ log.user.name if log.user else 'Sistema' }}</span></div><time>{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</time></div>{% else %}<p class="muted">Nenhuma atividade registrada.</p>{% endfor %}
+</section>
+<div class="management-shortcuts"><a href="{{ url_for('main.books') }}"><i class="bi bi-book"></i><span><b>Gerenciar acervo</b><small>Consultar, editar e arquivar títulos</small></span><i class="bi bi-arrow-up-right"></i></a><a href="{{ url_for('main.users') }}"><i class="bi bi-person-gear"></i><span><b>Gerenciar servidores</b><small>Contas e acessos do sistema</small></span><i class="bi bi-arrow-up-right"></i></a><a href="{{ url_for('main.reports') }}"><i class="bi bi-file-earmark-bar-graph"></i><span><b>Relatórios</b><small>Exportar dados do acervo</small></span><i class="bi bi-arrow-up-right"></i></a></div>
+{% endblock %}

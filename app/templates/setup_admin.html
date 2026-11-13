@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block title %}Configuração inicial · Biblioteca Central{% endblock %}{% block content %}
+<div class="login-card"><div class="login-mark"><i class="bi bi-shield-lock-fill"></i></div><span class="eyebrow">PRIMEIRO ACESSO</span><h2>Crie o Administrador Geral</h2><p>Esta etapa aparece somente quando ainda não existe uma conta de administrador. Escolha seus próprios dados de acesso.</p>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Nome completo</label><input class="form-control mb-3" name="name" required maxlength="140" autocomplete="name">
+<label>Login</label><input class="form-control mb-3" name="username" required maxlength="60" autocomplete="username">
+<label>E-mail</label><input class="form-control mb-3" type="email" name="email" required maxlength="160" autocomplete="email">
+<label>Senha (mínimo 10 caracteres)</label><input class="form-control mb-4" type="password" name="password" required minlength="10" autocomplete="new-password">
+<button class="btn btn-primary w-100">Criar Administrador Geral <i class="bi bi-arrow-right"></i></button></form></div>{% endblock %}

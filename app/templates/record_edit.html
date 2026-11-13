@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block heading %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="page-actions"><div><h2>{{ page_title }}</h2><p>Atualize os dados e salve para registrar as alterações.</p></div><a class="btn btn-light" href="{{ url_for('main.' + ({'Leitor':'borrowers','Empréstimo':'loans','Avaliação':'evaluations','Recomendação':'recommendations','Reserva':'reservations','Usuário':'users'}[entity])) }}">Voltar</a></div>
+<form method="post" class="panel form-panel">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="form-grid">
+{% for name,label,kind,value in fields %}
+<div class="{% if kind == 'checkbox' %}<input class="form-check-input" id="field-{{ name }}" type="checkbox" name="{{ name }}" {% if value %}checked{% endif %}>
+{% elif kind == 'textarea' %}span-2{% endif %}">
+<label for="field-{{ name }}">{{ label }}</label>
+{% if kind == 'checkbox' %}<input class="form-check-input" id="field-{{ name }}" type="checkbox" name="{{ name }}" {% if value %}checked{% endif %}>
+{% elif kind == 'textarea' %}<textarea class="form-control" id="field-{{ name }}" name="{{ name }}" rows="4">{{ value }}</textarea>
+{% elif kind == 'select' %}<select class="form-select" id="field-{{ name }}" name="{{ name }}">
+{% if name == 'condition' %}{% for option in ['Excelente','Bom','Regular','Ruim','Necessita de restauração'] %}<option value="{{ option }}" {% if value == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+{% elif name == 'status' and entity == 'Recomendação' %}{% for option in ['Pendente','Concluída','Cancelada'] %}<option value="{{ option }}" {% if value == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+{% elif name == 'status' %}{% for option in ['Pendente','Atendida','Cancelada'] %}<option value="{{ option }}" {% if value == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+{% elif name == 'role' %}<option value="servidor" {% if value == 'servidor' %}selected{% endif %}>Servidor</option><option value="admin" {% if value == 'admin' %}selected{% endif %}>Administrador Geral</option>{% endif %}
+</select>
+{% else %}<input class="form-control" id="field-{{ name }}" type="{{ kind }}" name="{{ name }}" value="{{ value }}" {% if kind == 'number' %}min="1" max="3650"{% endif %} {% if name in ['name','username','email','due_date','evaluated_at','reason'] %}required{% endif %}>{% endif %}
+</div>
+{% endfor %}
+</div><div class="form-footer"><button class="btn btn-primary" type="submit">Salvar alterações</button></div>
+</form>
+{% endblock %}
